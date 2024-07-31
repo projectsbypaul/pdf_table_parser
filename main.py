@@ -2,6 +2,12 @@ import camelot
 import pandas as pd
 import numpy as np
 import os
+import time
+import configparser
+
+
+def save_dataframe_to_csv(destination_dir, dataframe):
+    return
 
 
 def analyze_my_pdf(pdf_path: str):
@@ -74,8 +80,13 @@ def browse_dir_for_pdf(target_dir):
     return pdf_names
 
 
-def parse_reports(pdf_filenames, t_dir, search_string):
+def parse_reports(pdf_filenames, t_dir, search_string, header):
     df_results = []
+
+    df_header = pd.DataFrame([header], columns=range(len(header)))
+
+    # Ausgabe des DataFrames
+
     for pdf in pdf_filenames:
         print(f'Parsing report {pdf}')
         target_filename = os.path.join(t_dir, pdf)
@@ -84,19 +95,50 @@ def parse_reports(pdf_filenames, t_dir, search_string):
 
     df_results_merged = pd.concat(df_results, axis=0)
 
+    df_results_merged = pd.concat([df_header, df_results_merged], axis=0)
+
     return df_results_merged
 
 
 # main script
 if __name__ == '__main__':
-    target_dir = r'D:\KPI_project\Reports\test'
 
-    jobname = 'CV_02_2024'
+    config = configparser.ConfigParser()
 
-    searchstring = ['C032', 'C034', 'C040']
+    config.read('config.ini')
 
-    pdf_names = browse_dir_for_pdf(target_dir)
+    configuration = config['Setup']['Preset']
 
-    result = parse_reports(pdf_names, target_dir, searchstring)
+    save_dir = config[configuration]['save_dir']
 
-    print()
+    target = config[configuration]['target']
+
+    dir_jobs = config[configuration]['dir_jobs']
+    dir_jobs = [item.strip() for item in dir_jobs.split(',')]
+
+    searchstring = config[configuration]['searchstring']
+    searchstring = [item.strip() for item in searchstring.split(',')]
+
+    header = config[configuration]['header']
+    header = [item.strip() for item in header.split(',')]
+
+    for dirname in dir_jobs:
+        start = time.time()
+
+        target_dir = os.path.join(target, dirname)
+
+        jobname = f'{configuration}_{dirname}'
+
+        print(f'Starting Job {jobname}')
+
+        pdf_names = browse_dir_for_pdf(target_dir)
+
+        result: pd.DataFrame = parse_reports(pdf_names, target_dir, searchstring, header)
+
+        savefile = os.path.join(save_dir, jobname + '.xlsx')
+
+        result.to_excel(savefile, sheet_name=jobname)
+
+        end = time.time()
+
+        print(f' Job done: {end - start}')
