@@ -41,6 +41,7 @@ def read_my_pdf(pdf_path: str, pages: str):
 
 
 def parse_dataframes(table_df: [pd.DataFrame], search_string: [str], path_name: str):
+
     df_of_search_strings = []
 
     for s_string in search_string:
@@ -103,6 +104,10 @@ def parse_reports(pdf_filenames, t_dir, search_string, header):
 # main script
 if __name__ == '__main__':
 
+    #afer compiling .exe put exe in same dir as main.py else config will not be found by exe
+
+    print('reading config...')
+
     config = configparser.ConfigParser()
 
     config.read('config.ini')
@@ -121,6 +126,8 @@ if __name__ == '__main__':
 
     header = config[configuration]['header']
     header = [item.strip() for item in header.split(',')]
+
+    print('parsing pdf...')
 
     for dirname in dir_jobs:
         start = time.time()
